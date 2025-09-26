@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 
 public class Map
 {
@@ -80,20 +81,97 @@ public class Map
             }
             Console.WriteLine();
         }
+        Thread.Sleep(200);
     }
     
+}
+
+public class Robot
+{
+    private readonly Map _map;
+    public int X { get; set; }  
+    public int Y { get; set; }
+
+    public Robot(Map map)
+    {
+        this._map = map;
+        this.X = 0;
+        this.Y = 0;
+    }
+
+    public bool Move(int newX, int newY)
+    {
+        
+        if (_map.IsInBounds(newX, newY) && !_map.IsObstacle(newX, newY))
+        {
+            //set the new location
+            this.X = newX;
+            this.Y = newY;
+            //display the map with the robot in its location in the grid
+            _map.Display(this.X, this.Y);
+            return true;
+        }
+        else
+        {
+            // it cannot move
+            return false;
+        }
+    }
+
+    public void CleanCurrentSpot()
+    {
+        if(_map.IsDirt(this.X, this.Y))
+        {
+            _map.Clean(this.X, this.Y);
+            _map.Display(this.X, this.Y);
+        }
+    }
+
+    public void StartCleaning()
+    {
+        Console.WriteLine("Start cleaning the room");
+        //flag that determines the direction
+        int direction = 1;
+        for (int y = 0; y < _map.Height; y++)
+        {
+            int startX = (direction == 1) ? 0 : _map.Width - 1;
+            int endX = (direction == 1) ? _map.Width : -1;
+
+            for (int x = startX; x != endX; x+= direction)
+            {
+                Move(x, y);
+                CleanCurrentSpot();
+            }
+            direction *= -1; // reverse direction for next row
+        }
+    }
 }
 
 public class Program
 {
     public static void Main(string[] args)
     {
-        Console.WriteLine("HELLO World");
-        Map myMap = new Map(5, 5);
+        Console.WriteLine("Initialize Robot");
+        Map map = new Map(20, 10);
+        //map.Display(10, 10);
+
+        map.AddDirt(5, 3);
+        map.AddDirt(10, 8);
+        map.AddObstacle(2, 5);
+        map.AddObstacle(12, 1);
+        map.Display(11, 8);
+
+        Robot robot = new Robot(map);
+        robot.StartCleaning();
+        Console.WriteLine("Done .");
+
+
+        /*
         Console.WriteLine($" Grid Width is {myMap.Width}");
         Console.WriteLine($" Grid Height is {myMap.Height}");
         myMap.Display(2, 3);
         Console.WriteLine("Press any key to exit...");
+        */
         Console.ReadKey(); 
     }
 }
